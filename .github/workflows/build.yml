@@ -33,6 +33,13 @@ jobs:
       with:
         msbuild-architecture: x64
 
+    - name: Install Windows Driver Kit
+      run: |
+        $wdkUrl = "https://download.microsoft.com/download/41fb59c2-1723-45f9-a270-96b73ad58233/KIT_BUNDLE_WDK_MEDIACREATION/wdksetup.exe"
+        Invoke-WebRequest -Uri $wdkUrl -OutFile "$env:TEMP\wdksetup.exe"
+        Start-Process -FilePath "$env:TEMP\wdksetup.exe" -ArgumentList "/quiet", "/norestart", "/ceip off" -Wait
+      shell: pwsh
+
     - name: Restore NuGet packages
       run: msbuild -t:restore -p:RestorePackagesConfig=true
 
@@ -50,5 +57,5 @@ jobs:
       with:
         name: WinUHid-${{ matrix.configuration }}-${{ matrix.platform }}
         path: |
-          build/${{ matrix.configuration }}/${{ matrix.platform }}/WinUHid.*
+          build/${{ matrix.configuration }}/${{ matrix.platform }}/
           WinUHid/WinUHid.h
