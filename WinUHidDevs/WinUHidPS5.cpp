@@ -224,6 +224,8 @@ typedef struct _WINUHID_PS5_GAMEPAD {
 	WINUHID_PS5_TRIGGER_EFFECT LastRightTriggerEffect, LastLeftTriggerEffect;
 	PWINUHID_PS5_PLAYER_LED_CB PlayerLedCallback;
 	UCHAR LastPlayerLedState;
+	PWINUHID_PS5_MIC_LED_CB MicLedCallback;
+	UCHAR LastMicLedState;
 	PVOID CallbackContext;
 
 	LARGE_INTEGER QpcFrequency;
@@ -233,11 +235,24 @@ typedef struct _WINUHID_PS5_GAMEPAD {
 	UCHAR SequenceNumber;
 
 	UCHAR MacAddress[6];
+	UCHAR FirmwareInfoReport[64];
 } WINUHID_PS5_GAMEPAD, *PWINUHID_PS5_GAMEPAD;
 
 #define PS5_FEATURE_REPORT_CALIBRATION		0x05
 #define PS5_FEATURE_REPORT_PAIRING_INFO		0x09
 #define PS5_FEATURE_REPORT_FIRMWARE_INFO	0x20
+
+static const UCHAR k_DefaultFirmwareInfo[] =
+{
+	0x20, 0x4d, 0x61, 0x72, 0x20, 0x31, 0x35, 0x20,
+	0x32, 0x30, 0x32, 0x35, 0x31, 0x30, 0x3a, 0x30,
+	0x30, 0x3a, 0x30, 0x30, 0x04, 0x00, 0x14, 0x00,
+	0x2c, 0x04, 0x00, 0x00, 0x0a, 0x00, 0x0c, 0x01,
+	0x51, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x58, 0x04, 0x00, 0x00,
+	0x2a, 0x00, 0x01, 0x00, 0x09, 0x00, 0x02, 0x00,
+	0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
 
 #define PS5_OUTPUT_REPORT_EFFECTS           0x02
 
@@ -303,23 +318,8 @@ VOID WinUHidPS5Callback(PVOID CallbackContext, PWINUHID_DEVICE Device, PCWINUHID
 
 		case PS5_FEATURE_REPORT_FIRMWARE_INFO:
 		{
-			//
-			// This is dumped from a PS5 controller running a recent firmware
-			// which supports the newer better rumble support
-			//
-			static const UCHAR data[] =
-			{
-				0x20, 0x4a, 0x61, 0x6e, 0x20, 0x32, 0x39, 0x20,
-				0x32, 0x30, 0x32, 0x34, 0x30, 0x39, 0x3a, 0x31,
-				0x33, 0x3a, 0x35, 0x39, 0x02, 0x00, 0x04, 0x00,
-				0x14, 0x04, 0x00, 0x00, 0x0a, 0x00, 0x0c, 0x01,
-				0x51, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-				0x00, 0x00, 0x00, 0x00, 0x58, 0x04, 0x00, 0x00,
-				0x2a, 0x00, 0x01, 0x00, 0x09, 0x00, 0x02, 0x00,
-				0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			};
-
-			WinUHidCompleteReadEvent(Device, Event, data, sizeof(data));
+			WinUHidCompleteReadEvent(Device, Event,
+				gamepad->FirmwareInfoReport, sizeof(gamepad->FirmwareInfoReport));
 			break;
 		}
 
@@ -342,11 +342,18 @@ VOID WinUHidPS5Callback(PVOID CallbackContext, PWINUHID_DEVICE Device, PCWINUHID
 		}
 
 		default:
+		{
 			//
-			// Fail other feature reads that we don't implement
+			// Return zero-filled data for unimplemented feature reports.
+			// Returning NULL causes WebHID clients (Chrome) to timeout/retry
+			// on each unimplemented report during enumeration, leading to
+			// multi-second freezes.
 			//
-			WinUHidCompleteReadEvent(Device, Event, NULL, 0);
+			UCHAR zeroData[64] = {};
+			zeroData[0] = Event->ReportId;
+			WinUHidCompleteReadEvent(Device, Event, zeroData, sizeof(zeroData));
 			break;
+		}
 		}
 	}
 	else if (Event->Type == WINUHID_EVENT_SET_FEATURE) {
@@ -410,6 +417,11 @@ VOID WinUHidPS5Callback(PVOID CallbackContext, PWINUHID_DEVICE Device, PCWINUHID
 			}
 		}
 
+		if (gamepad->MicLedCallback && outputReport->MicMuteLedValid && outputReport->MuteButtonLed != gamepad->LastMicLedState) {
+			gamepad->MicLedCallback(gamepad->CallbackContext, outputReport->MuteButtonLed);
+			gamepad->LastMicLedState = outputReport->MuteButtonLed;
+		}
+
 		WinUHidCompleteWriteEvent(Device, Event, TRUE);
 	}
 }
@@ -417,7 +429,7 @@ VOID WinUHidPS5Callback(PVOID CallbackContext, PWINUHID_DEVICE Device, PCWINUHID
 WINUHID_API PWINUHID_PS5_GAMEPAD WinUHidPS5Create(PCWINUHID_PS5_GAMEPAD_INFO Info,
 	PWINUHID_PS5_RUMBLE_CB RumbleCallback, PWINUHID_PS5_LIGHTBAR_LED_CB LightBarLedCallback,
 	PWINUHID_PS5_PLAYER_LED_CB PlayerLedCallback, PWINUHID_PS5_TRIGGER_EFFECT_CB TriggerEffectCallback,
-	PVOID CallbackContext)
+	PWINUHID_PS5_MIC_LED_CB MicLedCallback, PVOID CallbackContext)
 {
 	WINUHID_DEVICE_CONFIG config = k_PS5Config;
 	PopulateDeviceInfo(&config, Info ? Info->BasicInfo : NULL);
@@ -441,10 +453,19 @@ WINUHID_API PWINUHID_PS5_GAMEPAD WinUHidPS5Create(PCWINUHID_PS5_GAMEPAD_INFO Inf
 	gamepad->LightBarCallback = LightBarLedCallback;
 	gamepad->PlayerLedCallback = PlayerLedCallback;
 	gamepad->TriggerEffectCallback = TriggerEffectCallback;
+	gamepad->MicLedCallback = MicLedCallback;
 	gamepad->CallbackContext = CallbackContext;
 
 	if (Info) {
 		RtlCopyMemory(&gamepad->MacAddress[0], &Info->MacAddress[0], sizeof(gamepad->MacAddress));
+
+		if (Info->FirmwareInfo && Info->FirmwareInfoLength == sizeof(gamepad->FirmwareInfoReport)) {
+			RtlCopyMemory(gamepad->FirmwareInfoReport, Info->FirmwareInfo, sizeof(gamepad->FirmwareInfoReport));
+		} else {
+			RtlCopyMemory(gamepad->FirmwareInfoReport, k_DefaultFirmwareInfo, sizeof(k_DefaultFirmwareInfo));
+		}
+	} else {
+		RtlCopyMemory(gamepad->FirmwareInfoReport, k_DefaultFirmwareInfo, sizeof(k_DefaultFirmwareInfo));
 	}
 
 	WinUHidPS5InitializeInputReport(&gamepad->LastInputReport);

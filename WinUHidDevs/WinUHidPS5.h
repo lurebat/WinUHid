@@ -136,6 +136,14 @@ typedef WINUHID_PS5_LIGHTBAR_LED_CB* PWINUHID_PS5_LIGHTBAR_LED_CB;
 typedef VOID WINUHID_PS5_PLAYER_LED_CB(PVOID CallbackContext, UCHAR LedValue);
 typedef WINUHID_PS5_PLAYER_LED_CB* PWINUHID_PS5_PLAYER_LED_CB;
 
+//
+// Optional callback to be invoked when mic mute LED state changes
+//
+// Values: 0 = off, 1 = on (solid), 2 = pulse (blink)
+//
+typedef VOID WINUHID_PS5_MIC_LED_CB(PVOID CallbackContext, UCHAR LedState);
+typedef WINUHID_PS5_MIC_LED_CB* PWINUHID_PS5_MIC_LED_CB;
+
 typedef struct _WINUHID_PS5_GAMEPAD_INFO {
 	//
 	// Basic HID and PnP device information (optional)
@@ -146,6 +154,15 @@ typedef struct _WINUHID_PS5_GAMEPAD_INFO {
 	// Unique identifier for this PS5 gamepad
 	//
 	UCHAR MacAddress[6];
+
+	//
+	// Optional raw firmware info report (feature report 0x20).
+	// If non-NULL, this 64-byte blob is served verbatim for
+	// GET_FEATURE 0x20 requests. First byte must be the report
+	// ID (0x20). If NULL, a built-in default is used.
+	//
+	CONST UCHAR *FirmwareInfo;
+	UCHAR FirmwareInfoLength;
 } WINUHID_PS5_GAMEPAD_INFO, * PWINUHID_PS5_GAMEPAD_INFO;
 typedef CONST WINUHID_PS5_GAMEPAD_INFO* PCWINUHID_PS5_GAMEPAD_INFO;
 
@@ -163,7 +180,7 @@ typedef CONST WINUHID_PS5_GAMEPAD_INFO* PCWINUHID_PS5_GAMEPAD_INFO;
 WINUHID_API PWINUHID_PS5_GAMEPAD WinUHidPS5Create(PCWINUHID_PS5_GAMEPAD_INFO Info,
 	PWINUHID_PS5_RUMBLE_CB RumbleCallback, PWINUHID_PS5_LIGHTBAR_LED_CB LightBarLedCallback,
 	PWINUHID_PS5_PLAYER_LED_CB PlayerLedCallback, PWINUHID_PS5_TRIGGER_EFFECT_CB TriggerEffectCallback,
-	PVOID CallbackContext);
+	PWINUHID_PS5_MIC_LED_CB MicLedCallback, PVOID CallbackContext);
 
 //
 // Initializes the input report with neutral data.
