@@ -759,6 +759,24 @@ pub struct Ps5State {
     pub gyro_y: f32,
     #[serde(default)]
     pub gyro_z: f32,
+    /// Adaptive trigger status — right trigger (0..15).
+    #[serde(default)]
+    pub trigger_right_status: u8,
+    /// Adaptive trigger stop location — right trigger (0..15).
+    #[serde(default)]
+    pub trigger_right_stop_location: u8,
+    /// Adaptive trigger status — left trigger (0..15).
+    #[serde(default)]
+    pub trigger_left_status: u8,
+    /// Adaptive trigger stop location — left trigger (0..15).
+    #[serde(default)]
+    pub trigger_left_stop_location: u8,
+    /// Adaptive trigger effect type — right trigger (0..15).
+    #[serde(default)]
+    pub trigger_right_effect: u8,
+    /// Adaptive trigger effect type — left trigger (0..15).
+    #[serde(default)]
+    pub trigger_left_effect: u8,
 }
 
 #[derive(Deserialize, Debug, Clone, Default)]
@@ -1302,6 +1320,14 @@ pub(crate) fn apply_ps5_state_bytes(r: &mut ffi::WINUHID_PS5_INPUT_REPORT, state
     bytes[ffi::PS5_OFF_HAT_FACE] = (bytes[ffi::PS5_OFF_HAT_FACE] & 0x0F) | face;
     bytes[ffi::PS5_OFF_SHOULDER_STICK] = shoulder;
     bytes[ffi::PS5_OFF_META] = meta;
+
+    // Adaptive trigger status (input-side feedback to the host).
+    bytes[ffi::PS5_OFF_TRIGGER_RIGHT_STATUS] =
+        (state.trigger_right_stop_location & 0x0F) | ((state.trigger_right_status & 0x0F) << 4);
+    bytes[ffi::PS5_OFF_TRIGGER_LEFT_STATUS] =
+        (state.trigger_left_stop_location & 0x0F) | ((state.trigger_left_status & 0x0F) << 4);
+    bytes[ffi::PS5_OFF_TRIGGER_EFFECT] =
+        (state.trigger_right_effect & 0x0F) | ((state.trigger_left_effect & 0x0F) << 4);
 }
 
 pub(crate) fn apply_xone_state_bytes(r: &mut ffi::WINUHID_XONE_INPUT_REPORT, state: &XOneState) {

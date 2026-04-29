@@ -250,6 +250,13 @@ pub const PS5_OFF_HAT_FACE: usize = 8; // hat:4, square:1, cross:1, circle:1, tr
 pub const PS5_OFF_SHOULDER_STICK: usize = 9; // L1, R1, L2, R2, share, options, L3, R3
 pub const PS5_OFF_META: usize = 10; // home, touchpad, mute, reserved, lf, rf, lp, rp
 
+// Adaptive trigger status (input report, not output effects).
+// These let the virtual controller report trigger feedback state
+// back to the host, e.g. for UI rendering.
+pub const PS5_OFF_TRIGGER_RIGHT_STATUS: usize = 42; // low 4 = stop location, high 4 = status
+pub const PS5_OFF_TRIGGER_LEFT_STATUS: usize = 43; // low 4 = stop location, high 4 = status
+pub const PS5_OFF_TRIGGER_EFFECT: usize = 48; // low 4 = right effect, high 4 = left effect
+
 pub const PS5_FACE_SQUARE: u8 = 1 << 4;
 pub const PS5_FACE_CROSS: u8 = 1 << 5;
 pub const PS5_FACE_CIRCLE: u8 = 1 << 6;

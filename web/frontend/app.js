@@ -571,6 +571,14 @@ function defaultControllerState(kind) {
     s.gyro_y = 0.0;
     s.gyro_z = 0.0;
   }
+  if (kind === 'ps5') {
+    s.trigger_right_status = 0;
+    s.trigger_right_stop_location = 0;
+    s.trigger_left_status = 0;
+    s.trigger_left_stop_location = 0;
+    s.trigger_right_effect = 0;
+    s.trigger_left_effect = 0;
+  }
   return s;
 }
 
@@ -588,16 +596,16 @@ function renderGamepadControls(root, dev, kind) {
     }
   }
   const hasTouchImu = (kind === 'ps4' || kind === 'ps5');
+  const hasTriggerStatus = (kind === 'ps5');
   const touchImuHtml = hasTouchImu ? `
       <div class="group" style="grid-column: 1 / -1">
         <h4>Touchpad</h4>
         <div class="touchpad" data-touchpad>
-          <div class="hint">click &amp; drag — primary touch</div>
+          <div class="hint">drag · Shift = 2nd touch · Ctrl = hold</div>
           <div class="dot" data-dot="1" hidden></div>
           <div class="dot dot2" data-dot="2" hidden></div>
         </div>
         <div style="display:flex; gap:8px; align-items:center; margin-top:6px; flex-wrap:wrap">
-          <button data-touch2-toggle>Second touch: off</button>
           <span class="meta" data-touch-readout>—</span>
         </div>
       </div>
@@ -605,6 +613,44 @@ function renderGamepadControls(root, dev, kind) {
         <h4>IMU (accelerometer / gyroscope)</h4>
         <div data-imu></div>
         <button class="danger" data-imu-reset style="margin-top:6px">reset IMU</button>
+      </div>
+  ` : '';
+  const triggerStatusHtml = hasTriggerStatus ? `
+      <div class="group" style="grid-column: 1 / -1">
+        <h4>Adaptive trigger status (input report)</h4>
+        <p class="meta" style="margin:0 0 8px 0">These fields go into the input report the virtual controller sends to the host.<br>They reflect the <em>physical state</em> of the adaptive triggers.</p>
+        <div class="trigger-status-grid" data-trigger-status>
+          <div class="imu-row">
+            <span>L status</span>
+            <select data-ts-key="trigger_left_status">${triggerStatusOptions()}</select>
+            <span></span>
+          </div>
+          <div class="imu-row">
+            <span>L stop</span>
+            <input type="range" min="0" max="15" value="0" data-ts-key="trigger_left_stop_location" />
+            <span class="imu-val" data-ts-val="trigger_left_stop_location">0</span>
+          </div>
+          <div class="imu-row">
+            <span>L effect</span>
+            <select data-ts-key="trigger_left_effect">${triggerEffectOptions()}</select>
+            <span></span>
+          </div>
+          <div class="imu-row">
+            <span>R status</span>
+            <select data-ts-key="trigger_right_status">${triggerStatusOptions()}</select>
+            <span></span>
+          </div>
+          <div class="imu-row">
+            <span>R stop</span>
+            <input type="range" min="0" max="15" value="0" data-ts-key="trigger_right_stop_location" />
+            <span class="imu-val" data-ts-val="trigger_right_stop_location">0</span>
+          </div>
+          <div class="imu-row">
+            <span>R effect</span>
+            <select data-ts-key="trigger_right_effect">${triggerEffectOptions()}</select>
+            <span></span>
+          </div>
+        </div>
       </div>
   ` : '';
   root.innerHTML = `
@@ -647,6 +693,7 @@ function renderGamepadControls(root, dev, kind) {
         <div class="btn-grid">${def.misc.map(b => `<button data-btn="${b}">${b.replace('btn_','').toUpperCase()}</button>`).join('')}</div>
       </div>
       ${touchImuHtml}
+      ${triggerStatusHtml}
     </div>
   `;
 
@@ -690,6 +737,7 @@ function renderGamepadControls(root, dev, kind) {
   refreshStickKnob(dev.id, kind, 'left');
   refreshStickKnob(dev.id, kind, 'right');
   if (hasTouchImu) wireTouchpadAndImu(root, dev, kind);
+  if (hasTriggerStatus) wireTriggerStatus(root, dev, kind);
   // Push initial neutral state so the OS sees a connected device.
   submitGamepad(dev, kind);
 }
@@ -700,20 +748,7 @@ function wireTouchpadAndImu(root, dev, kind) {
   const dot1 = pad.querySelector('[data-dot="1"]');
   const dot2 = pad.querySelector('[data-dot="2"]');
   const readout = root.querySelector('[data-touch-readout]');
-  const toggle = root.querySelector('[data-touch2-toggle]');
   const s = state.controllerState[dev.id];
-
-  let secondMode = false; // when true, the next pointerdown becomes the second contact
-  toggle.addEventListener('click', () => {
-    secondMode = !secondMode;
-    toggle.textContent = `Second touch: ${secondMode ? 'on (next press)' : 'off'}`;
-    if (!secondMode && s.touchpad2_active) {
-      s.touchpad2_active = false;
-      dot2.hidden = true;
-      submitGamepad(dev, kind);
-      updateReadout();
-    }
-  });
 
   function updateReadout() {
     const p1 = s.touchpad_active  ? `T1 ${s.touchpad_x},${s.touchpad_y}`  : 'T1 –';
@@ -742,18 +777,7 @@ function wireTouchpadAndImu(root, dev, kind) {
 
   pad.addEventListener('pointerdown', e => {
     pad.setPointerCapture(e.pointerId);
-    let slot;
-    if (secondMode && !s.touchpad2_active) {
-      slot = 2;
-      secondMode = false;
-      toggle.textContent = 'Second touch: off';
-    } else if (!s.touchpad_active) {
-      slot = 1;
-    } else if (!s.touchpad2_active) {
-      slot = 2;
-    } else {
-      slot = 1; // both already in use; replace primary
-    }
+    const slot = e.shiftKey ? 2 : 1;
     slots.set(e.pointerId, slot);
     const c = pointerToCoord(e);
     if (slot === 1) {
@@ -786,6 +810,7 @@ function wireTouchpadAndImu(root, dev, kind) {
     const slot = slots.get(e.pointerId);
     if (!slot) return;
     slots.delete(e.pointerId);
+    if (e.ctrlKey) return; // Ctrl held — keep touch persisted
     if (slot === 1) {
       s.touchpad_active = false; dot1.hidden = true;
     } else {
@@ -836,6 +861,54 @@ function wireTouchpadAndImu(root, dev, kind) {
       if (lbl) lbl.textContent = `0.0 ${a.unit}`;
     }
     submitGamepad(dev, kind);
+  });
+}
+
+// Adaptive trigger status options for <select> dropdowns.
+const TRIGGER_STATUS_LABELS = {
+  0: '0 – None', 1: '1 – Ready', 2: '2 – Actuating', 3: '3 – Completed',
+  4: '4 – Paused', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
+  10: '10', 11: '11', 12: '12', 13: '13', 14: '14', 15: '15',
+};
+const TRIGGER_EFFECT_LABELS = {
+  0: '0 – Off', 1: '1 – Continuous', 2: '2 – Section',
+  3: '3', 4: '4', 5: '5 – Vibrate', 6: '6 – Multi-Vibrate',
+  7: '7', 8: '8', 9: '9', 10: '10', 11: '11', 12: '12', 13: '13', 14: '14', 15: '15',
+};
+function triggerStatusOptions() {
+  return Object.entries(TRIGGER_STATUS_LABELS).map(
+    ([v, l]) => `<option value="${v}">${l}</option>`
+  ).join('');
+}
+function triggerEffectOptions() {
+  return Object.entries(TRIGGER_EFFECT_LABELS).map(
+    ([v, l]) => `<option value="${v}">${l}</option>`
+  ).join('');
+}
+
+function wireTriggerStatus(root, dev, kind) {
+  const s = state.controllerState[dev.id];
+  const container = root.querySelector('[data-trigger-status]');
+  if (!container) return;
+
+  container.querySelectorAll('select[data-ts-key]').forEach(sel => {
+    const key = sel.dataset.tsKey;
+    sel.value = s[key] || 0;
+    sel.addEventListener('change', () => {
+      s[key] = parseInt(sel.value, 10);
+      submitGamepad(dev, kind);
+    });
+  });
+  container.querySelectorAll('input[data-ts-key]').forEach(inp => {
+    const key = inp.dataset.tsKey;
+    inp.value = s[key] || 0;
+    const lbl = container.querySelector(`[data-ts-val="${key}"]`);
+    inp.addEventListener('input', () => {
+      const v = parseInt(inp.value, 10);
+      s[key] = v;
+      if (lbl) lbl.textContent = String(v);
+      submitGamepad(dev, kind);
+    });
   });
 }
 
@@ -951,6 +1024,11 @@ function pushEvent(id, ev) {
       state.feedback[id] = state.feedback[id] || {};
       state.feedback[id].trigger = ev;
       break;
+    case 'mic_led':
+      line = `<span class="ev-ts">${ts}</span> <span class="ev-led">MIC_LED</span> ${['off','on','pulse'][ev.state] ?? 'state=' + ev.state}`;
+      state.feedback[id] = state.feedback[id] || {};
+      state.feedback[id].mic = ev;
+      break;
     case 'input_snapshot':
       line = `<span class="ev-ts">${ts}</span> <span class="ev-info">→ submit</span> ${ev.hex}`;
       break;
@@ -974,33 +1052,68 @@ function renderFeedback(dev) {
   const el = $('#feedback-summary');
   if (!el) return;
   const f = state.feedback[dev.id] || {};
+  const kind = dev.kind;
   const blocks = [];
-  if (f.rumble) {
+
+  // Rumble — all gamepad types.
+  if (kind === 'ps4' || kind === 'ps5' || kind === 'xone') {
+    const r = f.rumble || { left: 0, right: 0 };
     blocks.push(`
       <div class="feedback-row"><span>Rumble L</span>
-        <div class="bar"><span style="width:${(f.rumble.left/255)*100}%"></span></div></div>
+        <div class="bar"><span style="width:${(r.left/255)*100}%"></span></div></div>
       <div class="feedback-row"><span>Rumble R</span>
-        <div class="bar"><span style="width:${(f.rumble.right/255)*100}%"></span></div></div>
+        <div class="bar"><span style="width:${(r.right/255)*100}%"></span></div></div>
     `);
-    if (f.rumble.left_trigger != null) {
+    if (kind === 'xone') {
+      const lt = r.left_trigger ?? 0;
+      const rt = r.right_trigger ?? 0;
       blocks.push(`
       <div class="feedback-row"><span>Trig L motor</span>
-        <div class="bar"><span style="width:${(f.rumble.left_trigger/255)*100}%"></span></div></div>
+        <div class="bar"><span style="width:${(lt/255)*100}%"></span></div></div>
       <div class="feedback-row"><span>Trig R motor</span>
-        <div class="bar"><span style="width:${(f.rumble.right_trigger/255)*100}%"></span></div></div>`);
+        <div class="bar"><span style="width:${(rt/255)*100}%"></span></div></div>`);
     }
   }
-  if (f.led) {
-    const c = `rgb(${f.led.red},${f.led.green},${f.led.blue})`;
-    blocks.push(`<div class="feedback-row"><span>LED</span><div><span class="swatch" style="background:${c}"></span> #${hex(f.led.red,2)}${hex(f.led.green,2)}${hex(f.led.blue,2)}</div></div>`);
+
+  // Lightbar LED — PS4 and PS5.
+  if (kind === 'ps4' || kind === 'ps5') {
+    const led = f.led || { red: 0, green: 0, blue: 0 };
+    const c = `rgb(${led.red},${led.green},${led.blue})`;
+    blocks.push(`<div class="feedback-row"><span>Lightbar</span><div><span class="swatch lg" style="background:${c}"></span> #${hex(led.red,2)}${hex(led.green,2)}${hex(led.blue,2)}</div></div>`);
   }
-  if (f.player) {
-    blocks.push(`<div class="feedback-row"><span>Player LED</span><div>0x${hex(f.player.value,2)} (mask 0x${hex(f.player.value & 0x1f, 2)})</div></div>`);
+
+  // Player LED — PS5 only.
+  if (kind === 'ps5') {
+    const pl = f.player || { value: 0 };
+    const bits = pl.value & 0x1f;
+    const dots = [0,1,2,3,4].map(i => `<span class="pled${bits & (1 << i) ? ' on' : ''}"></span>`).join('');
+    blocks.push(`<div class="feedback-row"><span>Player LED</span><div class="pled-row">${dots} <span class="meta">0x${hex(pl.value,2)}</span></div></div>`);
   }
-  if (f.trigger) {
-    blocks.push(`<div class="feedback-row"><span>Trigger FX</span><div>L=${f.trigger.left_kind ?? '–'} R=${f.trigger.right_kind ?? '–'}</div></div>`);
+
+  // Trigger FX — PS5 only.
+  if (kind === 'ps5') {
+    const t = f.trigger || {};
+    const trigKind = k => ({ 0:'Off', 1:'Continuous', 2:'Section', 5:'Vibrate', 6:'Multi-Vibrate' }[k] ?? `0x${hex(k,2)}`);
+    const trigDetail = (label, kv, dataHex) => {
+      if (kv == null) return `${label}: \u2013`;
+      return `${label}: ${trigKind(kv)}` + (dataHex ? ` <span class="meta">[${dataHex}]</span>` : '');
+    };
+    blocks.push(`<div class="feedback-row"><span>Trigger FX</span><div>${trigDetail('L', t.left_kind, t.left_data_hex)}<br>${trigDetail('R', t.right_kind, t.right_data_hex)}</div></div>`);
   }
-  el.innerHTML = blocks.length ? blocks.join('') : '<p class="muted">No feedback received yet — start a game or HID-aware app for the OS to talk back.</p>';
+
+  // Mic LED — PS5 only.
+  if (kind === 'ps5') {
+    const m = f.mic || { state: 0 };
+    const micLabels = ['off', 'on (solid)', 'pulse (blink)'];
+    const micClass = ['off', 'on', 'pulse'][m.state] || 'off';
+    blocks.push(`<div class="feedback-row"><span>Mic LED</span><div><span class="mic-dot ${micClass}"></span> ${micLabels[m.state] || 'unknown'}</div></div>`);
+  }
+
+  if (blocks.length) {
+    el.innerHTML = blocks.join('');
+  } else {
+    el.innerHTML = '<p class="muted">No feedback available for this device type.</p>';
+  }
 }
 
 // ---------------------------------------------------------------------------

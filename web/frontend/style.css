@@ -400,6 +400,17 @@ button.danger {
   color: var(--fg-muted);
 }
 
+.trigger-status-grid select {
+  width: 100%;
+  padding: 4px 6px;
+  background: var(--bg-elev);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
 /* ---------- Mouse trackpad ---------- */
 
 .trackpad {
@@ -480,3 +491,58 @@ button.danger {
 .toast.info    { border-left-color: var(--accent); }
 .toast.success { border-left-color: var(--good); }
 .toast.error   { border-left-color: var(--danger); }
+
+/* ---------- Enhanced feedback visuals ---------- */
+
+.swatch.lg {
+  width: 52px;
+  height: 22px;
+}
+
+.pled-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pled {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.pled.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+.mic-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 6px;
+  border: 1px solid var(--border);
+}
+.mic-dot.off {
+  background: var(--bg);
+}
+.mic-dot.on {
+  background: var(--warning);
+  border-color: var(--warning);
+  box-shadow: 0 0 4px var(--warning);
+}
+.mic-dot.pulse {
+  background: var(--warning);
+  border-color: var(--warning);
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--warning); }
+  50% { opacity: 0.3; box-shadow: none; }
+}
