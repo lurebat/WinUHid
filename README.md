@@ -29,6 +29,29 @@ A diagram of the data flow:
                                                         DirectInput, RawInput…)
 ```
 
+## About this fork
+
+This is a fork of [cgutman/WinUHid](https://github.com/cgutman/WinUHid)
+that integrates the following open pull requests from upstream:
+
+| PR | Author | Description |
+| --- | --- | --- |
+| [#2](https://github.com/cgutman/WinUHid/pull/2) | @ReenigneArcher | Use vcpkg as a Git submodule instead of a GitHub Action |
+| [#4](https://github.com/cgutman/WinUHid/pull/4) | @hkirste | Build guide (`BUILDING.md`), WDK in CI, release job |
+| [#5](https://github.com/cgutman/WinUHid/pull/5) | @hkirste | PS5 firmware passthrough, mic LED callback, feature report stubs |
+
+Additionally, this fork adds:
+
+* **`web/`** — A Rust + axum web UI for creating and driving virtual
+  devices from a browser.
+* **`scripts/`** — `install-driver.ps1` / `uninstall-driver.ps1` that
+  handle certificate installation, driver registration, *and* device
+  node creation via `devcon`.
+* **`Justfile`** — Task runner recipes for build, test, package, and
+  web workflows.
+* **Project documentation** — top-level README, AGENTS.md, CONTRIBUTING.md,
+  and per-component READMEs.
+
 ## Getting started
 
 Prerequisites:
