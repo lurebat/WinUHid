@@ -2,7 +2,7 @@
 #include "Utilities.h"
 
 TEST(PS5, CreateBasic) {
-	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL);
+	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -29,7 +29,7 @@ TEST(PS5, CreateAdvanced) {
 		&basicInfo,
 		{ 1, 2, 3, 4, 5, 6 } // MAC address
 	};
-	auto gamepad = WinUHidPS5Create(&PS5Info, NULL, NULL, NULL, NULL, NULL);
+	auto gamepad = WinUHidPS5Create(&PS5Info, NULL, NULL, NULL, NULL, NULL, NULL);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -57,7 +57,7 @@ TEST(PS5, ButtonMapping) {
 		&basicInfo
 	};
 
-	auto gamepad = WinUHidPS5Create(&PS5Info, NULL, NULL, NULL, NULL, NULL);
+	auto gamepad = WinUHidPS5Create(&PS5Info, NULL, NULL, NULL, NULL, NULL, NULL);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -155,7 +155,7 @@ TEST(PS5, ButtonMapping) {
 #define SDL_EXPECTED_STICK_VAL(x) (((int)(x) * 257) - 32768)
 #define SDL_EXPECTED_TRIGGER_VAL(x) (((int)(x) * 0x7FFF) / 0xFF)
 TEST(PS5, AxisMapping) {
-	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL);
+	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -220,7 +220,7 @@ TEST(PS5, AxisMapping) {
 }
 
 TEST(PS5, SensorMapping) {
-	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL);
+	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -298,7 +298,7 @@ TEST(PS5, SensorMapping) {
 #define TP_Y_AS_FLOAT(y) ((y) / 1070.f)
 
 TEST(PS5, TouchpadMapping) {
-	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL);
+	auto gamepad = WinUHidPS5Create(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -370,7 +370,7 @@ TEST(PS5, LedEffects) {
 	auto gamepad = WinUHidPS5Create(NULL, NULL,
 		[](PVOID CallbackContext, UCHAR LedRed, UCHAR LedGreen, UCHAR LedBlue) {
 			((CallbackData<UINT>*)CallbackContext)->Signal(MAKE_LED_VALUE(LedRed, LedGreen, LedBlue));
-		}, NULL, NULL, &ledState);
+		}, NULL, NULL, NULL, &ledState);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -403,7 +403,7 @@ TEST(PS5, PlayerLedEffects) {
 			// Mask the LED value to get only the enabled LED bits
 			//
 			((CallbackData<UCHAR>*)CallbackContext)->Signal(LedValue & 0x1F);
-		}, NULL, &playerLedState);
+		}, NULL, NULL, &playerLedState);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
@@ -451,7 +451,7 @@ TEST(PS5, RumbleEffects) {
 	auto gamepad = WinUHidPS5Create(NULL,
 		[](PVOID CallbackContext, UCHAR LeftMotor, UCHAR RightMotor) {
 			((CallbackData<UINT>*)CallbackContext)->Signal(MAKE_RUMBLE_VALUE(LeftMotor, RightMotor));
-		}, NULL, NULL, NULL, &rumbleState);
+		}, NULL, NULL, NULL, NULL, &rumbleState);
 	ASSERT_TRUE(gamepad) << "Failed to create PS5 gamepad";
 
 	SDLGamepadManager gm;
