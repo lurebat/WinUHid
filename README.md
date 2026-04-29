@@ -89,7 +89,16 @@ just web-run             # build & start the web UI on http://127.0.0.1:7878
 
 The `just` recipes auto-locate Visual Studio's `msbuild` and
 `vstest.console.exe` via `vswhere`, so you only need a developer shell
-for raw `msbuild` commands. For example:
+for raw `msbuild` commands. If you have multiple Visual Studio versions
+installed side-by-side, set `WINUHID_VS_VERSION` to a vswhere version
+range so the recipes pick the right one — for example, to pin VS 2022:
+
+```powershell
+$env:WINUHID_VS_VERSION = '[17.0,18.0)'
+just build
+```
+
+For raw `msbuild` commands without `just`, use a developer shell:
 
 ```powershell
 msbuild WinUHid.sln /p:Configuration=Release /p:Platform=x64 /m
