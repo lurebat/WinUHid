@@ -90,6 +90,7 @@ Every message is JSON with a `type` field tag:
 | `rumble`           | `ts_ms`, `left`, `right`, `left_trigger?`, `right_trigger?` |
 | `led`              | `ts_ms`, `red`, `green`, `blue` |
 | `player_led`       | `ts_ms`, `value` |
+| `mic_led`          | `ts_ms`, `state` (0=off, 1=on, 2=pulse) |
 | `trigger_effect`   | `ts_ms`, `left_kind?`, `left_data_hex?`, `right_kind?`, `right_data_hex?` |
 | `input_snapshot`   | `ts_ms`, `hex` (the bytes we just submitted) |
 | `diag`             | `ts_ms`, `level`, `msg` |

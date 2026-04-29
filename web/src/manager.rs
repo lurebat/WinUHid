@@ -51,6 +51,8 @@ pub enum DeviceEvent {
     },
     /// PS5 player-index LED.
     PlayerLed { ts_ms: u64, value: u8 },
+    /// PS5 mic mute LED state (0=off, 1=on, 2=pulse).
+    MicLed { ts_ms: u64, state: u8 },
     /// PS5 adaptive-trigger effect change.
     TriggerEffect {
         ts_ms: u64,
@@ -472,6 +474,8 @@ impl Manager {
         let info = ffi::WINUHID_PS5_GAMEPAD_INFO {
             BasicInfo: std::ptr::null(),
             MacAddress: random_mac(),
+            FirmwareInfo: std::ptr::null(),
+            FirmwareInfoLength: 0,
         };
         let ctx_ptr = Box::into_raw(ctx);
         let handle = unsafe {
@@ -481,6 +485,7 @@ impl Manager {
                 Some(ps5_lightbar_callback),
                 Some(ps5_player_led_callback),
                 Some(ps5_trigger_effect_callback),
+                Some(ps5_mic_led_callback),
                 ctx_ptr as *mut c_void,
             )
         };
@@ -1036,6 +1041,14 @@ unsafe extern "system" fn ps5_player_led_callback(callback_ctx: ffi::PVOID, valu
     let _ = ctx.tx.send(DeviceEvent::PlayerLed {
         ts_ms: now_ms(),
         value,
+    });
+}
+
+unsafe extern "system" fn ps5_mic_led_callback(callback_ctx: ffi::PVOID, led_state: u8) {
+    let ctx = unsafe { &*(callback_ctx as *const PresetFeedbackCtx) };
+    let _ = ctx.tx.send(DeviceEvent::MicLed {
+        ts_ms: now_ms(),
+        state: led_state,
     });
 }
 

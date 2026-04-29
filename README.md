@@ -45,9 +45,10 @@ Prerequisites:
   *Windows Driver Kit*) — the MSI alone provides only headers/libs;
   the VS component provides the `WindowsUserModeDriver10.0` platform
   toolset that the driver project targets via UMDF v2.
-* [`vcpkg`](https://github.com/microsoft/vcpkg) (only required to build
-  `WinUHidUnitTests`, which depends on SDL3). Set `VCPKG_ROOT` and
-  run `vcpkg integrate install` so MSBuild picks it up.
+* [`vcpkg`](https://github.com/microsoft/vcpkg) is included as a Git
+  submodule (only required to build `WinUHidUnitTests`, which depends
+  on SDL3). After cloning with `--recurse-submodules`, run
+  `vcpkg/vcpkg integrate install` so MSBuild picks it up.
 * (Optional, for the web UI) [Rust](https://rustup.rs/) 1.74+ and
   [`just`](https://github.com/casey/just).
 * No separate WiX install is required for the MSI — the `Installer/`
@@ -79,13 +80,11 @@ solution file.
 The driver is **test-signed**. To use it on a machine you must:
 
 1. Enable test signing: `bcdedit /set testsigning on` and reboot.
-2. Install the certificate that ships in
-   `Installer/WinUHid Package/WinUHidCertificate.cer` into the
-   `Trusted Root Certification Authorities` and `Trusted Publishers`
-   stores of *Local Machine*.
-3. Install the MSI built by the `WinUHid Package` project, **or** run
-   `pnputil /add-driver WinUHidDriver.inf /install` against the driver
-   produced by an MSBuild of `WinUHid Driver`.
+2. Run `just install-driver` from an elevated PowerShell — this installs
+   the certificate, registers the driver, and creates the device node.
+
+Alternatively, see [`BUILDING.md`](BUILDING.md) for manual installation
+steps.
 
 The driver auto-creates a single Plug-and-Play device under
 `Root\WinUHid` which is the entry point for user-mode clients.

@@ -212,6 +212,8 @@ pub type PWINUHID_PS5_GAMEPAD = *mut c_void;
 pub struct WINUHID_PS5_GAMEPAD_INFO {
     pub BasicInfo: *const WINUHID_PRESET_DEVICE_INFO,
     pub MacAddress: [u8; 6],
+    pub FirmwareInfo: *const u8,
+    pub FirmwareInfoLength: u8,
 }
 
 #[repr(C, packed)]
@@ -280,6 +282,7 @@ pub type PWINUHID_PS5_TRIGGER_EFFECT_CB = unsafe extern "system" fn(
     left: *const WINUHID_PS5_TRIGGER_EFFECT,
     right: *const WINUHID_PS5_TRIGGER_EFFECT,
 );
+pub type PWINUHID_PS5_MIC_LED_CB = unsafe extern "system" fn(ctx: PVOID, led_state: u8);
 
 // ---------------------------------------------------------------------------
 // Xbox One preset
@@ -421,6 +424,7 @@ pub struct Devs {
         Option<PWINUHID_PS5_LIGHTBAR_LED_CB>,
         Option<PWINUHID_PS5_PLAYER_LED_CB>,
         Option<PWINUHID_PS5_TRIGGER_EFFECT_CB>,
+        Option<PWINUHID_PS5_MIC_LED_CB>,
         PVOID,
     ) -> PWINUHID_PS5_GAMEPAD,
     pub WinUHidPS5InitializeInputReport: unsafe extern "system" fn(*mut WINUHID_PS5_INPUT_REPORT),
