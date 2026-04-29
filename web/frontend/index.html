@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WinUHid · virtual HID control panel</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>WinUHid <span class="tag">control panel</span></h1>
+      <div id="health" class="health">checking driver…</div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>Create a virtual device</h2>
+        <nav class="tabs" id="create-tabs">
+          <button data-tab="mouse" class="active">Mouse</button>
+          <button data-tab="ps4">DualShock&nbsp;4</button>
+          <button data-tab="ps5">DualSense</button>
+          <button data-tab="xone">Xbox&nbsp;One</button>
+          <button data-tab="generic">Generic&nbsp;HID</button>
+        </nav>
+
+        <div class="tab-body" id="tab-mouse">
+          <p>5-button mouse with scroll wheel.</p>
+          <label>Name <input id="mouse-name" placeholder="Mouse" /></label>
+          <button id="create-mouse" class="primary">Create mouse</button>
+        </div>
+
+        <div class="tab-body hidden" id="tab-ps4">
+          <p>Sony DualShock 4 — sticks, triggers, hat, face/shoulder buttons, touchpad button.</p>
+          <label>Name <input id="ps4-name" placeholder="DualShock 4" /></label>
+          <button id="create-ps4" class="primary">Create DualShock 4</button>
+        </div>
+
+        <div class="tab-body hidden" id="tab-ps5">
+          <p>Sony DualSense — DualShock 4 plus mute button. Adaptive triggers and lightbar feedback are surfaced in the debug pane.</p>
+          <label>Name <input id="ps5-name" placeholder="DualSense" /></label>
+          <button id="create-ps5" class="primary">Create DualSense</button>
+        </div>
+
+        <div class="tab-body hidden" id="tab-xone">
+          <p>Xbox One controller — sticks, 10-bit triggers, ABXY, bumpers, hat, Home button.</p>
+          <label>Name <input id="xone-name" placeholder="Xbox One Controller" /></label>
+          <button id="create-xone" class="primary">Create Xbox One controller</button>
+        </div>
+
+        <div class="tab-body hidden" id="tab-generic">
+          <p>
+            Define your own HID device by supplying the raw report descriptor as hex bytes
+            (whitespace ignored). The web UI will surface
+            <code>SET_FEATURE</code>, <code>WRITE_REPORT</code>, and (optionally)
+            <code>READ_REPORT</code> events from the OS.
+          </p>
+          <label class="full">
+            Preset
+            <select id="gen-preset">
+              <option value="custom">(custom)</option>
+              <option value="boot-keyboard">Boot keyboard</option>
+              <option value="joystick">Simple joystick (X/Y, 4 buttons)</option>
+              <option value="paddle">Two-axis paddle</option>
+              <option value="vendor-io">Generic vendor-defined I/O (16 in, 16 out)</option>
+            </select>
+          </label>
+          <div class="grid">
+            <label>Name <input id="gen-name" placeholder="Generic HID" /></label>
+            <label>Vendor ID (hex) <input id="gen-vid" value="cafe" /></label>
+            <label>Product ID (hex) <input id="gen-pid" value="beef" /></label>
+            <label>Version (hex) <input id="gen-ver" value="0100" /></label>
+            <label class="full">
+              Report descriptor (hex)
+              <textarea id="gen-desc" rows="6" placeholder="05 01 09 02 a1 01 …"></textarea>
+            </label>
+            <label class="full">
+              <input type="checkbox" id="gen-read" />
+              Enable READ_REPORT events (required for some polling apps)
+            </label>
+          </div>
+          <button id="create-generic" class="primary">Create generic device</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Active devices</h2>
+        <ul id="device-list" class="device-list"></ul>
+      </section>
+
+      <section class="panel" id="debug-panel">
+        <h2>Debug</h2>
+        <div id="debug-body">
+          <p class="muted">Select a device above to inspect it.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <small>
+        WinUHid · MIT · The driver and the underlying VHF stack are
+        Windows-only. Use this UI to create test devices, force-press
+        controls, and observe rumble / LED feedback from games.
+      </small>
+    </footer>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,482 @@
+:root {
+  --bg: #0f1115;
+  --bg-elev: #181c23;
+  --bg-panel: #1f242d;
+  --fg: #e7eaf0;
+  --fg-muted: #8a93a4;
+  --accent: #6ea8ff;
+  --accent-strong: #4a86ff;
+  --danger: #ff6b6b;
+  --good: #5dd39e;
+  --warning: #ffce6e;
+  --border: #2c3340;
+  --radius: 10px;
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+header .tag {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.health {
+  font-size: 13px;
+  color: var(--fg-muted);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+.health.good { color: var(--good); }
+.health.bad  { color: var(--danger); }
+.health.warn { color: var(--warning); }
+
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  padding: 16px;
+  max-width: 1500px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+footer {
+  padding: 12px 28px;
+  color: var(--fg-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.panel h2 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+}
+
+#debug-panel {
+  grid-column: 1 / -1;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.tabs button {
+  background: var(--bg-elev);
+  color: var(--fg-muted);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.tabs button.active {
+  background: var(--accent-strong);
+  color: white;
+  border-color: var(--accent-strong);
+}
+.tabs button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tab-body { display: block; }
+.tab-body.hidden { display: none; }
+
+.tab-body p {
+  margin-top: 0;
+  color: var(--fg-muted);
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.grid label.full { grid-column: 1 / -1; }
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+label input, label textarea, label select {
+  display: block;
+  width: 100%;
+  margin-top: 3px;
+  padding: 6px 8px;
+  background: var(--bg-elev);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+}
+textarea {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  resize: vertical;
+}
+
+button.primary {
+  background: var(--accent-strong);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 14px;
+}
+button.primary:hover { background: var(--accent); }
+button.primary:disabled { background: #2c3340; color: var(--fg-muted); cursor: not-allowed; }
+
+button.danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.device-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.device-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.device-list li.active {
+  border-color: var(--accent);
+  background: #233040;
+}
+.device-list .meta {
+  font-size: 12px;
+  color: var(--fg-muted);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.muted { color: var(--fg-muted); }
+
+/* ---------- Debug pane ---------- */
+
+.debug-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.debug-grid > .col {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.debug-grid h3 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+}
+
+.event-log {
+  height: 280px;
+  overflow-y: auto;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  background: #0e1117;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.event-log .ev-ts { color: var(--fg-muted); }
+.event-log .ev-kind { color: var(--accent); font-weight: 600; }
+.event-log .ev-rumble { color: var(--warning); }
+.event-log .ev-led { color: var(--good); }
+.event-log .ev-info { color: var(--fg-muted); }
+
+.feedback-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.swatch {
+  width: 36px; height: 18px; border-radius: 4px;
+  border: 1px solid var(--border);
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.bar {
+  height: 6px;
+  background: var(--bg);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+}
+
+/* ---------- Gamepad visual ---------- */
+
+.gamepad {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.gamepad .group {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+.gamepad h4 {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stick {
+  position: relative;
+  width: 110px; height: 110px;
+  background: #0a0d12;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  margin: 4px auto;
+}
+.stick .knob {
+  position: absolute;
+  width: 24px; height: 24px;
+  top: 50%; left: 50%;
+  margin-left: -12px; margin-top: -12px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  transition: transform 50ms linear;
+  cursor: grab;
+}
+
+.btn-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.btn-grid button {
+  background: var(--bg-elev);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-grid button.held {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.trigger {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 6px;
+  align-items: center;
+}
+.trigger input[type="range"] {
+  width: 100%;
+}
+
+/* ---------- Touchpad + IMU (PS4/PS5) ---------- */
+
+.touchpad {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1920 / 1000;
+  background: #0a0d12;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  touch-action: none;
+  cursor: crosshair;
+  overflow: hidden;
+}
+.touchpad .dot {
+  position: absolute;
+  width: 16px; height: 16px;
+  margin-left: -8px; margin-top: -8px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(74, 134, 255, 0.25);
+}
+.touchpad .dot.dot2 {
+  background: var(--good);
+  box-shadow: 0 0 0 2px rgba(93, 211, 158, 0.25);
+}
+.touchpad .hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.imu-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 60px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+.imu-row input[type="range"] { width: 100%; }
+.imu-row .imu-val {
+  text-align: right;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: var(--fg-muted);
+}
+
+/* ---------- Mouse trackpad ---------- */
+
+.trackpad {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 0 auto 10px auto;
+  background: #0a0d12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  touch-action: none;
+  cursor: crosshair;
+  overflow: hidden;
+}
+.trackpad .hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  font-size: 12px;
+  pointer-events: none;
+  transition: opacity 150ms linear;
+}
+.trackpad:hover .hint,
+.trackpad.active .hint { opacity: 0.2; }
+
+/* ---------- WebSocket status indicator ---------- */
+
+.ws-status {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg-muted);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.ws-status.live { color: var(--good); border-color: var(--good); }
+.ws-status.reconnecting { color: var(--warning); border-color: var(--warning); }
+.ws-status.dead { color: var(--danger); border-color: var(--danger); }
+
+/* ---------- Toasts ---------- */
+
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: min(420px, calc(100vw - 32px));
+}
+.toast {
+  pointer-events: auto;
+  background: var(--bg-panel);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+  word-break: break-word;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.toast.info    { border-left-color: var(--accent); }
+.toast.success { border-left-color: var(--good); }
+.toast.error   { border-left-color: var(--danger); }

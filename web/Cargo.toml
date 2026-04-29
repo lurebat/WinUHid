@@ -1,0 +1,39 @@
+[package]
+name = "winuhid-web"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Browser-based control panel for the WinUHid virtual HID driver."
+publish = false
+
+[[bin]]
+name = "winuhid-web"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+axum = { version = "0.7", features = ["ws", "macros"] }
+clap = { version = "4", features = ["derive", "env"] }
+hex = "0.4"
+libloading = "0.8"
+mime_guess = "2"
+parking_lot = "0.12"
+rust-embed = { version = "8", features = ["interpolate-folder-path"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "signal", "time", "net"] }
+tower-http = { version = "0.5", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Threading",
+] }
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
