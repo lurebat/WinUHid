@@ -11,6 +11,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -35,12 +37,15 @@ jobs:
       with:
         msbuild-architecture: x64
 
-    - name: Install Windows Driver Kit
-      run: |
-        $wdkUrl = "https://download.microsoft.com/download/41fb59c2-1723-45f9-a270-96b73ad58233/KIT_BUNDLE_WDK_MEDIACREATION/wdksetup.exe"
-        Invoke-WebRequest -Uri $wdkUrl -OutFile "$env:TEMP\wdksetup.exe"
-        Start-Process -FilePath "$env:TEMP\wdksetup.exe" -ArgumentList "/quiet", "/norestart", "/ceip off" -Wait
+    - name: Install WDK
       shell: pwsh
+      run: |
+        winget install --source winget --exact --id Microsoft.WindowsWDK.10.0.26100 --accept-source-agreements --accept-package-agreements --silent
+
+        $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $vsPath = & $vsWhere -latest -property installationPath
+        $vsInstaller = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+        & $vsInstaller modify --installPath $vsPath --add Microsoft.VisualStudio.Component.WDK --quiet --norestart
 
     - name: Restore NuGet packages
       run: msbuild -t:restore -p:RestorePackagesConfig=true
@@ -53,6 +58,23 @@ jobs:
 
     - name: Build solution
       run: msbuild WinUHid.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /m /verbosity:minimal
+
+    # To enable driver signing, add a code signing certificate as a GitHub secret
+    # named SIGNING_CERTIFICATE (base64-encoded PFX) and SIGNING_PASSWORD.
+    # OV certificate is sufficient for x86/x64. ARM64 requires WHQL (EV certificate).
+    #
+    # - name: Sign driver
+    #   if: matrix.configuration == 'Release' && secrets.SIGNING_CERTIFICATE
+    #   shell: pwsh
+    #   run: |
+    #     $pfxBytes = [Convert]::FromBase64String("${{ secrets.SIGNING_CERTIFICATE }}")
+    #     [IO.File]::WriteAllBytes("$env:TEMP\cert.pfx", $pfxBytes)
+    #     $signtool = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -Recurse |
+    #       Sort-Object FullName -Descending | Select-Object -First 1).FullName
+    #     $buildDir = "build\${{ matrix.configuration }}\${{ matrix.platform }}"
+    #     & $signtool sign /f "$env:TEMP\cert.pfx" /p "${{ secrets.SIGNING_PASSWORD }}" /fd sha256 /td sha256 /tr http://timestamp.digicert.com "$buildDir\WinUHidDriver.dll"
+    #     & $signtool sign /f "$env:TEMP\cert.pfx" /p "${{ secrets.SIGNING_PASSWORD }}" /fd sha256 /td sha256 /tr http://timestamp.digicert.com "$buildDir\WinUHid Driver\winuhiddriver.cat"
+    #     Remove-Item "$env:TEMP\cert.pfx"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -91,3 +113,29 @@ jobs:
 
     - name: Build release
       run: cargo build --manifest-path web/Cargo.toml --release
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download Release artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: WinUHid-Release-*
+
+    - name: Package for release
+      run: |
+        for dir in WinUHid-Release-*/; do
+          platform=$(basename "$dir" | sed 's/WinUHid-Release-//')
+          (cd "$dir" && zip -r "../WinUHid-${platform}.zip" .)
+        done
+
+    - name: Create release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: WinUHid-*.zip
+        generate_release_notes: true
