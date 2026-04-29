@@ -27,6 +27,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
@@ -36,8 +38,8 @@ jobs:
     - name: Restore NuGet packages
       run: msbuild -t:restore -p:RestorePackagesConfig=true
 
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v11
+    - name: Bootstrap vcpkg
+      run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat -disableMetrics
 
     - name: Install vcpkg MSBuild integration
       run: ${{ github.workspace }}/vcpkg/vcpkg.exe integrate install
@@ -48,11 +50,11 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
+        if-no-files-found: error
         name: WinUHid-${{ matrix.configuration }}-${{ matrix.platform }}
         path: |
           build/${{ matrix.configuration }}/${{ matrix.platform }}/WinUHid.*
           WinUHid/WinUHid.h
-
   web:
     name: Web crate (Rust)
     runs-on: windows-latest
