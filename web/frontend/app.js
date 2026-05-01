@@ -7,6 +7,7 @@ const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 const TOKEN_KEY = 'winuhid_token';
+const ACTIVE_DEVICE_KEY = 'winuhid_active_device';
 
 // If the page was opened with `#token=…`, stash the token in
 // sessionStorage and strip it from the URL so it doesn't end up in
@@ -45,12 +46,26 @@ const state = {
 // ---------------------------------------------------------------------------
 
 window.addEventListener('DOMContentLoaded', async () => {
+  wireMainTabs();
   wireTabs();
   wireCreateButtons();
+  wireDocs();
   await refreshHealth();
   await refreshDevices();
   setInterval(refreshDevices, 5000);
 });
+
+function wireMainTabs() {
+  $$('#main-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('#main-tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const view = btn.dataset.view;
+      $$('.view-body').forEach(el => el.classList.add('hidden'));
+      $('#view-' + view).classList.remove('hidden');
+    });
+  });
+}
 
 function wireTabs() {
   $$('#create-tabs button').forEach(btn => {
@@ -58,7 +73,7 @@ function wireTabs() {
       $$('#create-tabs button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
-      $$('.tab-body').forEach(el => el.classList.add('hidden'));
+      $$('.create-tab-body').forEach(el => el.classList.add('hidden'));
       $('#tab-' + tab).classList.remove('hidden');
     });
   });
@@ -71,6 +86,112 @@ function wireCreateButtons() {
   $('#create-xone').addEventListener('click', () => createPreset('xone', $('#xone-name').value));
   $('#create-generic').addEventListener('click', createGeneric);
   wireGenericPresets();
+}
+
+function wireDocs() {
+  highlightCodeSamples();
+  $$('.copy-code').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.code-sample')?.querySelector('code')?.innerText || '';
+      if (!code) return;
+      try {
+        await copyText(code);
+        const oldText = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = oldText; }, 1200);
+      } catch (e) {
+        showErr(e);
+      }
+    });
+  });
+}
+
+function highlightCodeSamples() {
+  $$('.code-sample code.language-c').forEach(code => {
+    code.innerHTML = highlightC(code.textContent);
+  });
+}
+
+function highlightC(source) {
+  const keywords = new Set([
+    'APP_STATE',
+    'BOOL', 'FALSE', 'NULL', 'PCWINUHID_PS5_TRIGGER_EFFECT', 'PWINUHID_PS5_GAMEPAD',
+    'PVOID', 'TRUE', 'UCHAR', 'UINT', 'VOID', 'WINUHID_PRESET_DEVICE_INFO',
+    'WINUHID_PS5_GAMEPAD_INFO', 'WINUHID_PS5_INPUT_REPORT', 'char', 'const', 'for',
+    'if', 'return', 'sizeof', 'static', 'struct', 'typedef', 'void',
+  ]);
+  const escapeHtml = value => value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  const wrap = (cls, value) => `<span class="tok-${cls}">${escapeHtml(value)}</span>`;
+  let out = '';
+  let i = 0;
+  while (i < source.length) {
+    const ch = source[i];
+    const prev = i === 0 ? '\n' : source[i - 1];
+    if (ch === '#' && prev === '\n') {
+      const end = source.indexOf('\n', i);
+      const next = end === -1 ? source.length : end;
+      out += wrap('preproc', source.slice(i, next));
+      i = next;
+    } else if (source.startsWith('//', i)) {
+      const end = source.indexOf('\n', i);
+      const next = end === -1 ? source.length : end;
+      out += wrap('comment', source.slice(i, next));
+      i = next;
+    } else if (source.startsWith('/*', i)) {
+      const end = source.indexOf('*/', i + 2);
+      const next = end === -1 ? source.length : end + 2;
+      out += wrap('comment', source.slice(i, next));
+      i = next;
+    } else if (ch === '"' || ch === "'") {
+      let next = i + 1;
+      while (next < source.length) {
+        if (source[next] === '\\') {
+          next += 2;
+        } else if (source[next] === ch) {
+          next += 1;
+          break;
+        } else {
+          next += 1;
+        }
+      }
+      out += wrap('string', source.slice(i, next));
+      i = next;
+    } else if (/\d/.test(ch)) {
+      const match = source.slice(i).match(/^0x[0-9a-fA-F]+|^\d+(?:\.\d+)?f?/);
+      out += wrap('number', match[0]);
+      i += match[0].length;
+    } else if (/[A-Za-z_]/.test(ch)) {
+      const match = source.slice(i).match(/^[A-Za-z_][A-Za-z0-9_]*/)[0];
+      out += keywords.has(match) ? wrap('keyword', match) : escapeHtml(match);
+      i += match.length;
+    } else {
+      out += escapeHtml(ch);
+      i += 1;
+    }
+  }
+  return out;
+}
+
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    if (!document.execCommand('copy')) throw new Error('copy failed');
+  } finally {
+    document.body.removeChild(ta);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -153,7 +274,8 @@ async function refreshHealth() {
   try {
     const h = await api('GET', '/api/health');
     if (h.driver_version === 0) {
-      el.textContent = 'driver: not loaded · devs: ' + (h.devs_available ? 'ok' : 'unavailable');
+      const err = h.driver_last_error == null ? '' : ` · Win32 0x${hex(h.driver_last_error, 8)}`;
+      el.textContent = 'driver: control device unavailable' + err + ' · devs: ' + (h.devs_available ? 'ok' : 'unavailable');
       el.classList.remove('good'); el.classList.add('bad');
     } else {
       el.textContent = `driver: v${h.driver_version} · devs: ${h.devs_available ? 'ok' : 'unavailable'}`;
@@ -178,13 +300,22 @@ async function refreshDevices() {
   try {
     const list = await api('GET', '/api/devices');
     state.devices = list;
-    renderDeviceList();
     if (state.activeId && !list.some(d => d.id === state.activeId)) {
       // The active device was destroyed out from under us.
       cancelReconnect();
       if (state.ws) { try { state.ws.close(); } catch (_) {} state.ws = null; }
       setWsStatus('dead');
+      state.activeId = null;
+      try { sessionStorage.removeItem(ACTIVE_DEVICE_KEY); } catch (_) {}
     }
+    if (!state.activeId && list.length) {
+      let saved = null;
+      try { saved = sessionStorage.getItem(ACTIVE_DEVICE_KEY); } catch (_) {}
+      const restored = list.find(d => d.id === saved) || list[0];
+      selectDevice(restored.id);
+      return;
+    }
+    renderDeviceList();
   } catch (e) {
     console.warn(e);
   }
@@ -221,6 +352,7 @@ function renderDeviceList() {
       }
       if (state.activeId === d.id) {
         state.activeId = null;
+        try { sessionStorage.removeItem(ACTIVE_DEVICE_KEY); } catch (_) {}
         cancelReconnect();
         if (state.ws) { try { state.ws.close(); } catch (_) {} state.ws = null; }
       }
@@ -233,6 +365,7 @@ function renderDeviceList() {
 
 function selectDevice(id) {
   state.activeId = id;
+  try { sessionStorage.setItem(ACTIVE_DEVICE_KEY, id); } catch (_) {}
   cancelReconnect();
   if (state.ws) { try { state.ws.close(); } catch (_) {} state.ws = null; }
   state.wsDeviceId = id;

@@ -13,95 +13,418 @@
     </header>
 
     <main>
-      <section class="panel">
-        <h2>Create a virtual device</h2>
-        <nav class="tabs" id="create-tabs">
-          <button data-tab="mouse" class="active">Mouse</button>
-          <button data-tab="ps4">DualShock&nbsp;4</button>
-          <button data-tab="ps5">DualSense</button>
-          <button data-tab="xone">Xbox&nbsp;One</button>
-          <button data-tab="generic">Generic&nbsp;HID</button>
-        </nav>
+      <nav class="tabs main-tabs" id="main-tabs">
+        <button data-view="control" class="active">Control&nbsp;Panel</button>
+        <button data-view="guide">Library&nbsp;Guide</button>
+      </nav>
 
-        <div class="tab-body" id="tab-mouse">
-          <p>5-button mouse with scroll wheel.</p>
-          <label>Name <input id="mouse-name" placeholder="Mouse" /></label>
-          <button id="create-mouse" class="primary">Create mouse</button>
-        </div>
+      <div class="view-body" id="view-control">
+        <section class="panel">
+          <h2>Create a virtual device</h2>
+          <nav class="tabs" id="create-tabs">
+            <button data-tab="mouse" class="active">Mouse</button>
+            <button data-tab="ps4">DualShock&nbsp;4</button>
+            <button data-tab="ps5">DualSense</button>
+            <button data-tab="xone">Xbox&nbsp;One</button>
+            <button data-tab="generic">Generic&nbsp;HID</button>
+          </nav>
 
-        <div class="tab-body hidden" id="tab-ps4">
-          <p>Sony DualShock 4 — sticks, triggers, hat, face/shoulder buttons, touchpad button.</p>
-          <label>Name <input id="ps4-name" placeholder="DualShock 4" /></label>
-          <button id="create-ps4" class="primary">Create DualShock 4</button>
-        </div>
-
-        <div class="tab-body hidden" id="tab-ps5">
-          <p>Sony DualSense — DualShock 4 plus mute button. Adaptive triggers and lightbar feedback are surfaced in the debug pane.</p>
-          <label>Name <input id="ps5-name" placeholder="DualSense" /></label>
-          <button id="create-ps5" class="primary">Create DualSense</button>
-        </div>
-
-        <div class="tab-body hidden" id="tab-xone">
-          <p>Xbox One controller — sticks, 10-bit triggers, ABXY, bumpers, hat, Home button.</p>
-          <label>Name <input id="xone-name" placeholder="Xbox One Controller" /></label>
-          <button id="create-xone" class="primary">Create Xbox One controller</button>
-        </div>
-
-        <div class="tab-body hidden" id="tab-generic">
-          <p>
-            Define your own HID device by supplying the raw report descriptor as hex bytes
-            (whitespace ignored). The web UI will surface
-            <code>SET_FEATURE</code>, <code>WRITE_REPORT</code>, and (optionally)
-            <code>READ_REPORT</code> events from the OS.
-          </p>
-          <label class="full">
-            Preset
-            <select id="gen-preset">
-              <option value="custom">(custom)</option>
-              <option value="boot-keyboard">Boot keyboard</option>
-              <option value="joystick">Simple joystick (X/Y, 4 buttons)</option>
-              <option value="paddle">Two-axis paddle</option>
-              <option value="vendor-io">Generic vendor-defined I/O (16 in, 16 out)</option>
-            </select>
-          </label>
-          <div class="grid">
-            <label>Name <input id="gen-name" placeholder="Generic HID" /></label>
-            <label>Vendor ID (hex) <input id="gen-vid" value="cafe" /></label>
-            <label>Product ID (hex) <input id="gen-pid" value="beef" /></label>
-            <label>Version (hex) <input id="gen-ver" value="0100" /></label>
-            <label class="full">
-              Report descriptor (hex)
-              <textarea id="gen-desc" rows="6" placeholder="05 01 09 02 a1 01 …"></textarea>
-            </label>
-            <label class="full">
-              <input type="checkbox" id="gen-read" />
-              Enable READ_REPORT events (required for some polling apps)
-            </label>
+          <div class="create-tab-body" id="tab-mouse">
+            <p>5-button mouse with scroll wheel.</p>
+            <label>Name <input id="mouse-name" placeholder="Mouse" /></label>
+            <button id="create-mouse" class="primary">Create mouse</button>
           </div>
-          <button id="create-generic" class="primary">Create generic device</button>
+
+          <div class="create-tab-body hidden" id="tab-ps4">
+            <p>Sony DualShock 4 — sticks, triggers, hat, face/shoulder buttons, touchpad button.</p>
+            <label>Name <input id="ps4-name" placeholder="DualShock 4" /></label>
+            <button id="create-ps4" class="primary">Create DualShock 4</button>
+          </div>
+
+          <div class="create-tab-body hidden" id="tab-ps5">
+            <p>Sony DualSense — DualShock 4 plus mute button. Adaptive triggers and lightbar feedback are surfaced in the debug pane.</p>
+            <label>Name <input id="ps5-name" placeholder="DualSense" /></label>
+            <button id="create-ps5" class="primary">Create DualSense</button>
+          </div>
+
+          <div class="create-tab-body hidden" id="tab-xone">
+            <p>Xbox One controller — sticks, 10-bit triggers, ABXY, bumpers, hat, Home button.</p>
+            <label>Name <input id="xone-name" placeholder="Xbox One Controller" /></label>
+            <button id="create-xone" class="primary">Create Xbox One controller</button>
+          </div>
+
+          <div class="create-tab-body hidden" id="tab-generic">
+            <p>
+              Define your own HID device by supplying the raw report descriptor as hex bytes
+              (whitespace ignored). The web UI will surface
+              <code>SET_FEATURE</code>, <code>WRITE_REPORT</code>, and (optionally)
+              <code>READ_REPORT</code> events from the OS.
+            </p>
+            <label class="full">
+              Preset
+              <select id="gen-preset">
+                <option value="custom">(custom)</option>
+                <option value="boot-keyboard">Boot keyboard</option>
+                <option value="joystick">Simple joystick (X/Y, 4 buttons)</option>
+                <option value="paddle">Two-axis paddle</option>
+                <option value="vendor-io">Generic vendor-defined I/O (16 in, 16 out)</option>
+              </select>
+            </label>
+            <div class="grid">
+              <label>Name <input id="gen-name" placeholder="Generic HID" /></label>
+              <label>Vendor ID (hex) <input id="gen-vid" value="cafe" /></label>
+              <label>Product ID (hex) <input id="gen-pid" value="beef" /></label>
+              <label>Version (hex) <input id="gen-ver" value="0100" /></label>
+              <label class="full">
+                Report descriptor (hex)
+                <textarea id="gen-desc" rows="6" placeholder="05 01 09 02 a1 01 …"></textarea>
+              </label>
+              <label class="full">
+                <input type="checkbox" id="gen-read" />
+                Enable READ_REPORT events (required for some polling apps)
+              </label>
+            </div>
+            <button id="create-generic" class="primary">Create generic device</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Active devices</h2>
+          <ul id="device-list" class="device-list"></ul>
+        </section>
+
+        <section class="panel" id="debug-panel">
+          <h2>Debug</h2>
+          <div id="debug-body">
+            <p class="muted">Select a device above to inspect it.</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel view-body hidden docs-panel" id="view-guide">
+        <div class="docs-heading">
+          <div>
+            <h2>DualSense Library Guide</h2>
+            <p class="muted">
+              A native C/C++ guide for using <code>WinUHidDevs.dll</code>
+              and <code>WinUHidPS5.h</code> directly from your own application.
+            </p>
+          </div>
         </div>
-      </section>
 
-      <section class="panel">
-        <h2>Active devices</h2>
-        <ul id="device-list" class="device-list"></ul>
-      </section>
+        <div class="docs-layout">
+          <aside class="docs-toc" aria-label="DualSense guide contents">
+            <strong>Contents</strong>
+            <a href="#guide-linking">Linking and lifetime</a>
+            <a href="#guide-input">Input reports</a>
+            <a href="#guide-touch-sensors">Touch, sensors, battery</a>
+            <a href="#guide-feedback">Rumble and LEDs</a>
+            <a href="#guide-triggers">Adaptive triggers</a>
+            <a href="#guide-edge">Custom IDs and Edge</a>
+          </aside>
 
-      <section class="panel" id="debug-panel">
-        <h2>Debug</h2>
-        <div id="debug-body">
-          <p class="muted">Select a device above to inspect it.</p>
+          <article class="docs-article">
+            <section class="doc-section" id="guide-linking">
+              <h3>Linking and lifetime</h3>
+              <p>
+                Include <code>WinUHidPS5.h</code>, link against
+                <code>WinUHidDevs.lib</code> and <code>WinUHid.lib</code>, and
+                ship the matching DLLs beside your application or on
+                <code>PATH</code>. A created gamepad stays alive until you call
+                <code>WinUHidPS5Destroy</code>.
+              </p>
+              <p>
+                Pass callbacks when you want to observe host output reports such
+                as rumble, LEDs, or adaptive trigger effects. Pass
+                <code>NULL</code> for callbacks your app does not need.
+              </p>
+              <div class="code-sample">
+                <button type="button" class="copy-code">Copy</button>
+                <pre><code class="language-c">#include &lt;windows.h&gt;
+#include &lt;stdio.h&gt;
+
+#include "WinUHidPS5.h"
+
+static VOID OnRumble(PVOID ctx, UCHAR left, UCHAR right);
+static VOID OnLightbar(PVOID ctx, UCHAR r, UCHAR g, UCHAR b);
+static VOID OnPlayerLed(PVOID ctx, UCHAR value);
+static VOID OnTriggerEffect(
+    PVOID ctx,
+    PCWINUHID_PS5_TRIGGER_EFFECT left,
+    PCWINUHID_PS5_TRIGGER_EFFECT right);
+static VOID OnMicLed(PVOID ctx, UCHAR state);
+
+typedef struct APP_STATE {
+    PWINUHID_PS5_GAMEPAD Pad;
+    BOOL Running;
+} APP_STATE;
+
+static BOOL StartDualSense(APP_STATE *app) {
+    WINUHID_PS5_GAMEPAD_INFO info = { 0 };
+
+    info.MacAddress[0] = 0x02;
+    info.MacAddress[1] = 0x11;
+    info.MacAddress[2] = 0x22;
+    info.MacAddress[3] = 0x33;
+    info.MacAddress[4] = 0x44;
+    info.MacAddress[5] = 0x55;
+
+    app-&gt;Pad = WinUHidPS5Create(
+        &amp;info,
+        OnRumble,
+        OnLightbar,
+        OnPlayerLed,
+        OnTriggerEffect,
+        OnMicLed,
+        app);
+
+    if (!app-&gt;Pad) {
+        printf("WinUHidPS5Create failed: %lu\n", GetLastError());
+        return FALSE;
+    }
+
+    app-&gt;Running = TRUE;
+    return TRUE;
+}
+
+static VOID StopDualSense(APP_STATE *app) {
+    if (app-&gt;Pad) {
+        WinUHidPS5Destroy(app-&gt;Pad);
+        app-&gt;Pad = NULL;
+    }
+    app-&gt;Running = FALSE;
+}</code></pre>
+              </div>
+            </section>
+
+            <section class="doc-section" id="guide-input">
+              <h3>Input reports</h3>
+              <p>
+                Start every report with
+                <code>WinUHidPS5InitializeInputReport</code>. Sticks are
+                unsigned bytes centered at <code>0x80</code>, analog triggers
+                are <code>0..255</code>, and the hat helper accepts
+                <code>-1</code>, <code>0</code>, or <code>1</code> per axis.
+              </p>
+              <p>
+                Set both the analog trigger value and the matching digital
+                <code>ButtonL2</code>/<code>ButtonR2</code> bit when you want a
+                full trigger press to look natural to games.
+              </p>
+              <div class="code-sample">
+                <button type="button" class="copy-code">Copy</button>
+                <pre><code class="language-c">static UCHAR AxisFromFloat(float value) {
+    if (value &lt; -1.0f) value = -1.0f;
+    if (value &gt;  1.0f) value =  1.0f;
+    return (UCHAR)(128.0f + value * 127.0f);
+}
+
+static UCHAR TriggerFromFloat(float value) {
+    if (value &lt; 0.0f) value = 0.0f;
+    if (value &gt; 1.0f) value = 1.0f;
+    return (UCHAR)(value * 255.0f);
+}
+
+static BOOL SubmitGameplayInput(PWINUHID_PS5_GAMEPAD pad) {
+    WINUHID_PS5_INPUT_REPORT report;
+    WinUHidPS5InitializeInputReport(&amp;report);
+
+    report.LeftStickX = AxisFromFloat(-0.75f);
+    report.LeftStickY = AxisFromFloat(0.35f);
+    report.RightStickX = AxisFromFloat(0.20f);
+    report.RightStickY = AxisFromFloat(0.0f);
+
+    report.LeftTrigger = TriggerFromFloat(0.70f);
+    report.RightTrigger = TriggerFromFloat(1.0f);
+    report.ButtonL2 = report.LeftTrigger &gt; 0;
+    report.ButtonR2 = report.RightTrigger &gt; 0;
+
+    report.ButtonCross = TRUE;
+    report.ButtonSquare = TRUE;
+    report.ButtonL1 = TRUE;
+    report.ButtonShare = FALSE;
+    report.ButtonOptions = FALSE;
+    report.ButtonMute = FALSE;
+
+    WinUHidPS5SetHatState(&amp;report, 1, 0);
+
+    if (!WinUHidPS5ReportInput(pad, &amp;report)) {
+        printf("WinUHidPS5ReportInput failed: %lu\n", GetLastError());
+        return FALSE;
+    }
+    return TRUE;
+}</code></pre>
+              </div>
+            </section>
+
+            <section class="doc-section" id="guide-touch-sensors">
+              <h3>Touch, sensors, and battery</h3>
+              <p>
+                The DualSense helper exposes two simultaneous touch contacts.
+                Touch coordinates use the controller's <code>1920x1080</code>
+                touchpad space. Accelerometer values are in meters per second
+                squared; gyroscope values are in radians per second.
+              </p>
+              <div class="code-sample">
+                <button type="button" class="copy-code">Copy</button>
+                <pre><code class="language-c">static BOOL SubmitTouchSensorsAndBattery(PWINUHID_PS5_GAMEPAD pad) {
+    WINUHID_PS5_INPUT_REPORT report;
+    WinUHidPS5InitializeInputReport(&amp;report);
+
+    WinUHidPS5SetTouchState(&amp;report, 0, TRUE, 960, 540);
+    WinUHidPS5SetTouchState(&amp;report, 1, TRUE, 420, 280);
+
+    WinUHidPS5SetAccelState(&amp;report, 0.0f, 0.0f, 9.8f);
+    WinUHidPS5SetGyroState(&amp;report, 0.0f, 0.0f, 0.4f);
+
+    WinUHidPS5SetBatteryState(&amp;report, TRUE, 85);
+    report.ButtonTouchpad = TRUE;
+
+    return WinUHidPS5ReportInput(pad, &amp;report);
+}</code></pre>
+              </div>
+            </section>
+
+            <section class="doc-section" id="guide-feedback">
+              <h3>Rumble and LEDs</h3>
+              <p>
+                Rumble, lightbar color, player LEDs, and mic LED state are
+                host-to-device output reports. Your virtual device does not
+                command these itself; it observes what the OS or game sends.
+              </p>
+              <div class="code-sample">
+                <button type="button" class="copy-code">Copy</button>
+                <pre><code class="language-c">static VOID OnRumble(PVOID ctx, UCHAR left, UCHAR right) {
+    APP_STATE *app = (APP_STATE *)ctx;
+    (void)app;
+    printf("rumble left=%u right=%u\n", left, right);
+}
+
+static VOID OnLightbar(PVOID ctx, UCHAR r, UCHAR g, UCHAR b) {
+    (void)ctx;
+    printf("lightbar #%02x%02x%02x\n", r, g, b);
+}
+
+static VOID OnPlayerLed(PVOID ctx, UCHAR value) {
+    (void)ctx;
+    printf("player LED mask=0x%02x\n", value &amp; 0x1F);
+}
+
+static VOID OnMicLed(PVOID ctx, UCHAR state) {
+    (void)ctx;
+    const char *name = "unknown";
+    if (state == 0) name = "off";
+    if (state == 1) name = "solid";
+    if (state == 2) name = "pulse";
+    printf("mic LED %s (%u)\n", name, state);
+}</code></pre>
+              </div>
+            </section>
+
+            <section class="doc-section" id="guide-triggers">
+              <h3>Adaptive triggers</h3>
+              <p>
+                Games send adaptive trigger effects through output reports.
+                The callback receives decoded effect payloads; either pointer
+                may be <code>NULL</code> when that trigger has no active effect.
+                The input report also has 4-bit status fields for reporting
+                trigger state back to the host.
+              </p>
+              <div class="code-sample">
+                <button type="button" class="copy-code">Copy</button>
+                <pre><code class="language-c">static VOID PrintTriggerEffect(
+    const char *label,
+    PCWINUHID_PS5_TRIGGER_EFFECT effect)
+{
+    if (!effect) {
+        printf("%s trigger: no effect\n", label);
+        return;
+    }
+
+    printf("%s trigger effect type=%u data=", label, effect-&gt;Type);
+    for (UINT i = 0; i &lt; sizeof(effect-&gt;Data); ++i) {
+        printf("%02x", effect-&gt;Data[i]);
+    }
+    printf("\n");
+}
+
+static VOID OnTriggerEffect(
+    PVOID ctx,
+    PCWINUHID_PS5_TRIGGER_EFFECT left,
+    PCWINUHID_PS5_TRIGGER_EFFECT right)
+{
+    (void)ctx;
+    PrintTriggerEffect("left", left);
+    PrintTriggerEffect("right", right);
+}
+
+static BOOL SubmitTriggerStatus(PWINUHID_PS5_GAMEPAD pad) {
+    WINUHID_PS5_INPUT_REPORT report;
+    WinUHidPS5InitializeInputReport(&amp;report);
+
+    report.TriggerLeftStatus = 2;
+    report.TriggerLeftStopLocation = 8;
+    report.TriggerLeftEffect = 1;
+    report.TriggerRightStatus = 2;
+    report.TriggerRightStopLocation = 10;
+    report.TriggerRightEffect = 5;
+
+    return WinUHidPS5ReportInput(pad, &amp;report);
+}</code></pre>
+              </div>
+            </section>
+
+            <section class="doc-section" id="guide-edge">
+              <h3>Custom IDs and DualSense Edge</h3>
+              <p>
+                Override <code>BasicInfo</code> when you need a custom VID, PID,
+                version, instance ID, or hardware IDs. Use product ID <code>0x0DF2</code>
+                for DualSense Edge-specific controls such as paddles and
+                function buttons.
+              </p>
+              <div class="code-sample">
+                <button type="button" class="copy-code">Copy</button>
+                <pre><code class="language-c">static PWINUHID_PS5_GAMEPAD CreateDualSenseEdge(PVOID callbackContext) {
+    WINUHID_PRESET_DEVICE_INFO basic = { 0 };
+    basic.VendorID = 0x054C;
+    basic.ProductID = 0x0DF2;
+    basic.VersionNumber = 0x0100;
+
+    WINUHID_PS5_GAMEPAD_INFO info = { 0 };
+    info.BasicInfo = &amp;basic;
+    info.MacAddress[0] = 0x02;
+    info.MacAddress[1] = 0xAA;
+    info.MacAddress[2] = 0xBB;
+    info.MacAddress[3] = 0xCC;
+    info.MacAddress[4] = 0xDD;
+    info.MacAddress[5] = 0xEE;
+
+    return WinUHidPS5Create(
+        &amp;info,
+        OnRumble,
+        OnLightbar,
+        OnPlayerLed,
+        OnTriggerEffect,
+        OnMicLed,
+        callbackContext);
+}
+
+static BOOL SubmitEdgeButtons(PWINUHID_PS5_GAMEPAD pad) {
+    WINUHID_PS5_INPUT_REPORT report;
+    WinUHidPS5InitializeInputReport(&amp;report);
+
+    report.ButtonLeftPaddle = TRUE;
+    report.ButtonRightPaddle = TRUE;
+    report.ButtonLeftFunction = TRUE;
+
+    return WinUHidPS5ReportInput(pad, &amp;report);
+}</code></pre>
+              </div>
+            </section>
+          </article>
         </div>
       </section>
     </main>
-
-    <footer>
-      <small>
-        WinUHid · MIT · The driver and the underlying VHF stack are
-        Windows-only. Use this UI to create test devices, force-press
-        controls, and observe rumble / LED feedback from games.
-      </small>
-    </footer>
 
     <div id="toasts" class="toasts" aria-live="polite"></div>
 

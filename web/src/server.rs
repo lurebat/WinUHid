@@ -180,12 +180,15 @@ fn serve_embedded(path: &str) -> Response {
 #[derive(Serialize)]
 struct Health {
     driver_version: u32,
+    driver_last_error: Option<u32>,
     devs_available: bool,
 }
 
 async fn health(State(m): State<Arc<Manager>>) -> Json<Health> {
+    let driver = m.driver_status();
     Json(Health {
-        driver_version: m.driver_version(),
+        driver_version: driver.version,
+        driver_last_error: driver.last_error,
         devs_available: m.devs_available(),
     })
 }

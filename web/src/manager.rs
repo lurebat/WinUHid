@@ -100,6 +100,12 @@ pub struct Manager {
     devices: Mutex<HashMap<Uuid, Arc<Device>>>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct DriverStatus {
+    pub version: u32,
+    pub last_error: Option<u32>,
+}
+
 impl Manager {
     pub fn new(sdk: Arc<ffi::Sdk>) -> Self {
         Self {
@@ -110,6 +116,20 @@ impl Manager {
 
     pub fn driver_version(&self) -> u32 {
         unsafe { (self.sdk.core.WinUHidGetDriverInterfaceVersion)() }
+    }
+
+    pub fn driver_status(&self) -> DriverStatus {
+        ffi::clear_last_win32_error();
+        let version = unsafe { (self.sdk.core.WinUHidGetDriverInterfaceVersion)() };
+        let last_error = if version == 0 {
+            Some(ffi::last_win32_error_code())
+        } else {
+            None
+        };
+        DriverStatus {
+            version,
+            last_error,
+        }
     }
 
     pub fn devs_available(&self) -> bool {

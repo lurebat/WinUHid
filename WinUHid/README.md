@@ -17,6 +17,12 @@ check via `WinUHidGetDriverInterfaceVersion()`.
 If you're modifying this project, see [`AGENTS.md`](../AGENTS.md) for
 the rules.
 
+## Preset devices
+
+Use the core SDK when you want to define your own HID report descriptor.
+For ready-made devices such as a mouse, DualShock 4, DualSense, or Xbox
+One controller, use [`WinUHidDevs.dll`](../WinUHidDevs/) instead.
+
 ## Build flags
 
 The header switches between three modes via preprocessor macros:

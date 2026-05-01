@@ -672,3 +672,21 @@ pub fn last_win32_error(label: &str) -> anyhow::Error {
         anyhow!("{label} failed (non-Windows build)")
     }
 }
+
+pub fn last_win32_error_code() -> u32 {
+    #[cfg(windows)]
+    {
+        unsafe { windows_sys::Win32::Foundation::GetLastError() }
+    }
+    #[cfg(not(windows))]
+    {
+        0
+    }
+}
+
+pub fn clear_last_win32_error() {
+    #[cfg(windows)]
+    unsafe {
+        windows_sys::Win32::Foundation::SetLastError(0);
+    }
+}
